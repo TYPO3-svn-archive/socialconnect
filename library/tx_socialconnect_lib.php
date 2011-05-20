@@ -24,89 +24,98 @@ class lib_socialconnect_be {
 	
 	static function getIframePopupJS($uid, $url, $width = 600, $height = 520) {
 		$content = "
-<script type=\"text/javascript\">					
-	Ext.select('#tx-socialconnect-uid-".$uid."').on('click', function(){
-		/**
-		 * Generate and render the panel
-		 */
-		var filterPanel = new Ext.FormPanel({
-			title: 'Message Form',
-			id: 'rkMessagingForm',
-			header: false,
-			defaultType: 'textfield',
-			scope: this,
-			bodyStyle: 'padding: 5px 5px 3px 5px; border-width: 0; margin-bottom: 7px;',
-			labelAlign: 'right',
-	
-			items: [{
-					xtype: 'panel',
-					bodyStyle: 'margin-bottom: 7px; border: none;',
-					html: '<div id=\"tx-rkmessaging-options\"></div>'
-				}
-			],
-			keys:({
-				key: Ext.EventObject.ENTER,
-				fn: this.triggerSubmitForm,
-				scope: this
-			}),
-			buttons: [{
-				text: 'Afronden',
-				formBind: true,
-				handler: function(){
-					Ext.getCmp('socialconnectWindow').close();
-					window.location.reload()
-				},
-			},
-			{
-				text: 'Cancel',
-				formBind: true,
-				handler: function(){
-					Ext.getCmp('socialconnectWindow').close();
-				},
-			}] 
-		});
-		
-		var filterDialog = new Ext.Window({
-				id: 'socialconnectWindow',
-				title: 'Message',
-				width: 300,
-				height: 200,
-				closable: true,
-				resizable: false,
-				plain: true,
-				border: false,
-				//modal: true,
-				draggable: true,
-				items: [filterPanel]
-			});
-		
-		Ext.getCmp('socialconnectWindow').show();
-		
-		/*
-		Ext.Ajax.request({
-			url: 'ajax.php',
-			params: {
-				'ajaxID': 'tx_rkmessaging::remove',
-				'tx-rkmessaging-uid': Ext.get('tx-rkmessaging-uid').dom.value
-			},
-			method: 'GET',
-			success: function(response) {
-				parentNode = Ext.get('tx-rkmessaging-uid').dom.parentNode.parentNode.parentNode;
-				Ext.get(parentNode).fadeOut({useDisplay: true});
-			},
-			scope: this
-		});*/
-		
-		/**
-		 * Generate the flag lists, this is done through ajax since it might change if we
-		 * have multiple instances of the back-end opened. Next to that we won't have to 
-		 * reload the entire back-end. 
-		 */
-		Ext.Element.get('tx-rkmessaging-options').insertHtml('afterBegin','<p>Follow the steps of the popup..</p><p>After authorisation, press finish.</p>');
-		
+<script type=\"text/javascript\">
+	function openPopup() {
 		// open the url in new window
 		window.open('".$url."', 'twitterconnect', 'width=600,height=530');
-	});
+	}
+	if (typeof Ext == 'undefined') {  
+	    // ExtJS is not loaded
+	    
+	    
+	    // just open the window.
+	} else {
+	    // ExtJS is loaded
+		Ext.select('#tx-socialconnect-uid-".$uid."').on('click', function(){
+			/**
+			 * Generate and render the panel
+			 */
+			var filterPanel = new Ext.FormPanel({
+				title: 'Message Form',
+				id: 'rkMessagingForm',
+				header: false,
+				defaultType: 'textfield',
+				scope: this,
+				bodyStyle: 'padding: 5px 5px 3px 5px; border-width: 0; margin-bottom: 7px;',
+				labelAlign: 'right',
+		
+				items: [{
+						xtype: 'panel',
+						bodyStyle: 'margin-bottom: 7px; border: none;',
+						html: '<div id=\"tx-rkmessaging-options\"></div>'
+					}
+				],
+				keys:({
+					key: Ext.EventObject.ENTER,
+					fn: this.triggerSubmitForm,
+					scope: this
+				}),
+				buttons: [{
+					text: 'Afronden',
+					formBind: true,
+					handler: function(){
+						Ext.getCmp('socialconnectWindow').close();
+						window.location.reload()
+					},
+				},
+				{
+					text: 'Cancel',
+					formBind: true,
+					handler: function(){
+						Ext.getCmp('socialconnectWindow').close();
+					},
+				}] 
+			});
+			
+			var filterDialog = new Ext.Window({
+					id: 'socialconnectWindow',
+					title: 'Message',
+					width: 300,
+					height: 200,
+					closable: true,
+					resizable: false,
+					plain: true,
+					border: false,
+					//modal: true,
+					draggable: true,
+					items: [filterPanel]
+				});
+			
+			Ext.getCmp('socialconnectWindow').show();
+			
+			/*
+			Ext.Ajax.request({
+				url: 'ajax.php',
+				params: {
+					'ajaxID': 'tx_rkmessaging::remove',
+					'tx-rkmessaging-uid': Ext.get('tx-rkmessaging-uid').dom.value
+				},
+				method: 'GET',
+				success: function(response) {
+					parentNode = Ext.get('tx-rkmessaging-uid').dom.parentNode.parentNode.parentNode;
+					Ext.get(parentNode).fadeOut({useDisplay: true});
+				},
+				scope: this
+			});*/
+			
+			/**
+			 * Generate the flag lists, this is done through ajax since it might change if we
+			 * have multiple instances of the back-end opened. Next to that we won't have to 
+			 * reload the entire back-end. 
+			 */
+			Ext.Element.get('tx-rkmessaging-options').insertHtml('afterBegin','<p>Follow the steps of the popup..</p><p>After authorisation, press finish.</p>');
+		});
+	}
 </script>
 		";
 		return $content;
@@ -114,7 +123,7 @@ class lib_socialconnect_be {
 	
 	function getWindowHTML($uid, $str) {
 		// wrap in an div with identifierid
-		$content = '<div id="tx-socialconnect-uid-'.$uid.'" style="cursor: pointer;">'.$str.'</div>';
+		$content = '<div id="tx-socialconnect-uid-'.$uid.'" style="cursor: pointer;"><a onclick="javascript: openPopup(); return false;">'.$str.'</a></div>';
 		return $content;
 	}
 	
@@ -168,8 +177,9 @@ class lib_socialconnect_be {
 				'networkid='.$params['networkid'],
 			);
 			$where = implode(' AND ', $whereConf);
-			// check if user exists
-			$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow('uid','tx_socialconnect_networks',$where);			
+			// check if user exists -> execSelectGetSingleRow does not work for earlier versions..
+			$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('uid','tx_socialconnect_networks',$where, '', '', 1);
+			$row = $row[0];
 			// if user exists, update
 			if(!empty($row)) { 
 				$updateValues = array (
@@ -236,11 +246,17 @@ class lib_socialconnect_be {
 		// get token and secret
 		if( !empty($conf['socialconnectid']) ) {
 			$uid = intval($conf['socialconnectid']);
-			$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow(
+ 
+			$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
 				'name, userkey, secret',
 				'tx_socialconnect_networks',
-				'uid = ' .$uid
+				'uid = ' .$uid,
+				'',
+				'',
+				1
 			);
+			$row = $row[0];
+			
 			$token = $row['userkey'];
 			$secret = $row['secret'];
 			

@@ -117,7 +117,7 @@ class user_connect_twitter {
 		    $content .= htmlentities($tmhOAuth->response['response']);
 		  }
 		}		
-		$connectimg = t3lib_extMgm::extRelPath($this->extKey).'res/images/connect-with-twitter.gif';
+		$connectimg = '/typo3conf/ext/socialconnect/res/images/connect-with-twitter.gif';
 		
 		if( !empty($url) ) {
 			/* Save preference to user session */
@@ -127,6 +127,7 @@ class user_connect_twitter {
 			// show connect button
 			$identifier = $this->mediaconf['value'];
 			$link = $url;
+			//$content .= t3lib_div::view_array($GLOBALS['TSFE']->fe_user->sesData);
 			//$content .= $this->s_callbackUrl;
 			$content .= lib_socialconnect_be::createJSPopup($identifier, '<img src="'.$connectimg.'" />', $link);
 		}
@@ -227,11 +228,15 @@ class user_connect_twitter {
 					$query['where'] = implode(' AND ', $whereparts);
 				}
 				
-				$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow(
+				$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
 					$query['alias'] .' as message',
 					$query['table'],
-					$query['where']
+					$query['where'],
+					'',
+					'',
+					1
 				);
+				$row = $row[0];
 				$postMessage['message'] = $row['message'];
 			}
 			
