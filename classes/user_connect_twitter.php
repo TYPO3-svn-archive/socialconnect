@@ -29,7 +29,7 @@ class user_connect_twitter {
 		$pid = $_REQUEST['id'] ? $_REQUEST['id'] : 2;
 		$this->buildTSFE($pid);
 		$this->mediaconf = $mediaconf;
-		$this->s_callbackUrl = 'http://'.$GLOBALS['_SERVER']['HTTP_HOST'].'/index.php?eID=socialconnect';
+		$this->s_callbackUrl = 'http://'.$GLOBALS['_SERVER']['HTTP_HOST'].'/index.php?eID=socialconnect&media=twitter';
 		return $content;
 	}
 	

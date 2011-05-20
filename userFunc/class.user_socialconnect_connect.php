@@ -45,5 +45,23 @@ class user_socialconnect_connect extends lib_socialconnect_be {
 		}
 		return '<div>'.$content.'</div>';
 	}
+	
+	function finishConnect($media) {
+		$enabledSocialMedia = $this->init_enabledSocialMedia();
+		$mediaConf = $enabledSocialMedia[$media];
+		if( is_array($mediaConf) ) {
+			// add to render
+			$_mediaObj = t3lib_div::getUserObj($mediaConf['userObj']);
+			if( method_exists($_mediaObj, 'init') ) {
+				$content = $_mediaObj->init($mediaConf);
+			}
+			
+			if( method_exists($_mediaObj, 'finishConnect') ) {
+				$content = $_mediaObj->finishConnect();
+			} else {
+				$content = $media . ' -> finishConnect function could not be initiated'; 
+			}
+		}
+	}
 }
 ?>
