@@ -1,0 +1,2 @@
+# cat=basic/dev/1000; type=user[EXT:socialconnect/userFunc/class.user_socialconnect_connect.php:user_socialconnect_connect->user_connectToSocialMedia]; label=LLL:EXT:socialconnect/locallang_db.xml:extmng.socialconnect
+connectedToSocialMedia=0
