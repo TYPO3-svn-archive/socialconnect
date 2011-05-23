@@ -41,7 +41,7 @@ class user_connect_twitter {
 			require_once(PATH_t3lib.'class.t3lib_tsparser_ext.php');
 			require_once(PATH_t3lib.'class.t3lib_page.php');
 			require_once(PATH_t3lib.'class.t3lib_stdgraphic.php');
-			//if(empty($BACK_PATH)) {$BACK_PATH = '/home/benjamin.nl/www/typo3/';}
+			
 			require_once(PATH_typo3.'sysext/cms/tslib/class.tslib_fe.php');
 			require_once(PATH_typo3.'sysext/cms/tslib/class.tslib_content.php');
 			require_once(PATH_typo3.'sysext/cms/tslib/class.tslib_gifbuilder.php');
@@ -62,7 +62,6 @@ class user_connect_twitter {
 				//*** Builds sub objects
 				$GLOBALS['TSFE']->tmpl = t3lib_div::makeInstance('t3lib_tsparser_ext');
 				$GLOBALS['TSFE']->sys_page = t3lib_div::makeInstance('t3lib_pageSelect');
-				$GLOBALS['TSFE']->fe_user = t3lib_div::makeInstance('tslib_feUserAuth');
 		
 				//*** init template
 				$GLOBALS['TSFE']->tmpl->tt_track = 0;// Do not log time-performance information
@@ -70,13 +69,15 @@ class user_connect_twitter {
 		
 				$rootLine = $GLOBALS['TSFE']->sys_page->getRootLine($pid);
 				
-				// initiate fe_user objects
-				$GLOBALS['TSFE']->fe_user->name = 'fe_typo_user';
-				$GLOBALS['TSFE']->fe_user->id = isset($_COOKIE['fe_typo_user']) ? stripslashes($_COOKIE['fe_typo_user']) : '';
-				$GLOBALS['TSFE']->fe_user->fetchSessionData();
-		
 				//*** Builds a cObj
 				$GLOBALS['TSFE']->newCObj();
+			}
+			if (!is_object($GLOBALS['BE_USER'])) {
+				// Create new backend user object
+				$GLOBALS['BE_USER'] = t3lib_div::makeInstance('t3lib_beUserAuth');
+				// Initialize backend user object and load group information
+				$GLOBALS['BE_USER']->start(); // Object is initialized
+				$GLOBALS['BE_USER']->backendCheckLogin();
 			}
 		} else {
 			// dont overwrite object if already loaded..
@@ -121,13 +122,11 @@ class user_connect_twitter {
 		
 		if( !empty($url) ) {
 			/* Save preference to user session */
-			$GLOBALS['TSFE']->fe_user->setKey("ses","tx_twitter_sessionnew", $_SESSION);
-			$GLOBALS['TSFE']->fe_user->sesData_change = true;
-			$GLOBALS['TSFE']->fe_user->storeSessionData(); 
+			$this->saveSession("tx_twitter_sessionnew", $_SESSION);
 			// show connect button
 			$identifier = $this->mediaconf['value'];
 			$link = $url;
-			//$content .= t3lib_div::view_array($GLOBALS['TSFE']->fe_user->sesData);
+			//$content .= t3lib_div:: view_array($this->getSession('tx_twitter_sessionnew'));
 			//$content .= $this->s_callbackUrl;
 			$content .= lib_socialconnect_be::createJSPopup($identifier, '<img src="'.$connectimg.'" />', $link);
 		}
@@ -137,9 +136,10 @@ class user_connect_twitter {
 	
 	
 	function finishConnect() {
+		$this->buildTSFE(2); // set backenduser..
 		$content = ''; $here = $this->s_callbackUrl;
-		if(empty($_SESSION) ) {
-			$_SESSION = $GLOBALS["TSFE"]->fe_user->getKey("ses","tx_twitter_sessionnew");
+		if( empty($_SESSION) ) {
+			$_SESSION = $this->getSession("tx_twitter_sessionnew");
 		} 
 		$tmhOAuth = new tmhOAuth(array(
 		  'consumer_key'    => $this->consumer_key,
@@ -179,10 +179,8 @@ class user_connect_twitter {
 		  unset($_SESSION['oauth']);
 		  
 		  /* Save preference to user session */
-			$GLOBALS['TSFE']->fe_user->setKey("ses","tx_twitter_sessionnew", $_SESSION);
-			$GLOBALS['TSFE']->fe_user->sesData_change = true;
-			$GLOBALS['TSFE']->fe_user->storeSessionData();
-		  header("Location: {$here}");
+			$this->saveSession("tx_twitter_sessionnew", $_SESSION);
+			header("Location: {$here}");
 		} else {
 			
 			// something went wrong, redirecting back to twitter 
@@ -205,6 +203,16 @@ class user_connect_twitter {
 		  }
 		}
 		return $content;
+	}
+	
+	function saveSession($key, $params) {
+		$GLOBALS['BE_USER']->setAndSaveSessionData($key, $params);
+		return $session;
+	}
+	
+	function getSession($key) {
+		$session = $GLOBALS['BE_USER']->getSessionData($key);
+		return $session;
 	}
 	
 	function postToNetwork($token, $secret, $message) {
@@ -275,7 +283,6 @@ class user_connect_twitter {
 			$response = json_decode($tmhOAuth->response['response']);
 		  return $response->error;
 		}
-		
 		
 		// post message to twitter!
 		
