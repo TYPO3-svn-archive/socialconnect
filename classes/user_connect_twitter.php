@@ -225,45 +225,6 @@ class user_connect_twitter {
 			'message' => $message
 		);
 		
-		$postMessage = array();
-		if( is_array($message) ) {
-			if( is_array($message['lookUpTable']) ) {
-				$query = $message['lookUpTable'];
-				if( is_array($query['where']) ) {
-					foreach($query['where'] as $key => $value) {
-						$whereparts[] = $key . '="' . $value.'"';
-					}
-					$query['where'] = implode(' AND ', $whereparts);
-				}
-				
-				$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
-					$query['alias'] .' as message',
-					$query['table'],
-					$query['where'],
-					'',
-					'',
-					1
-				);
-				$row = $row[0];
-				$postMessage['message'] = $row['message'];
-			}
-			
-			if( is_array($message['linkToPage']) ) {
-				$linkToPage = $message['linkToPage'];
-				if( is_array($linkToPage['typolink']) ) {
-					// get URL made by realurl
-					$link = $this->getURL($linkToPage['typolink']);
-				}
-				$postMessage['link'] = $link;
-			}
-			
-		}
-		$s_postMessage = implode(' ', $postMessage);
-		// if length is longer than the maximum 140 chars, create an tinyurl
-		if(strlen($s_postMessage) > 140) {
-			$postMessage['link'] = $this->get_tiny_url($postMessage['link']);
-			$s_postMessage = implode(' ', $postMessage);
-		}
 		
 		// title news -> url -> possible hashtags
 		$tmhOAuth = new tmhOAuth(array(
@@ -273,7 +234,7 @@ class user_connect_twitter {
   		'user_secret'     => $secret,
 		));
 		$code = $tmhOAuth->request('POST', $tmhOAuth->url('1/statuses/update'), array(
-		  'status' => trim($s_postMessage)
+		  'status' => trim($message)
 		));
 		
 		if ($code == 200) {

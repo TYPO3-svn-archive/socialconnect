@@ -264,7 +264,8 @@ class lib_socialconnect_be {
 		}
 		
 		if( method_exists($_mediaObj, 'postToNetwork') ) {
-			$posted = $_mediaObj->postToNetwork($token, $secret, $message);
+			$s_message = self :: renderOutputMessage($message);
+			$posted = $_mediaObj->postToNetwork($token, $secret, $s_message);
 			if($posted === true) {
 				$title = 'Succesfull posted to network';
 				$text = 'The message has been posted on '. $media .' with the account: '.$username;
@@ -288,10 +289,96 @@ class lib_socialconnect_be {
 		} else {
 			$content .= $media . ' -> postToNetwork function could not be initiated'; 
 		}
-		
-		
-
 		return '<div>'.$content.'</div>';
+	}
+	
+	function renderOutputMessage($config) {
+		$postMessage = array();
+		if( is_array($config) ) {
+			$postMessage['message'] = '';
+			
+			if( isset($config['prepend']) ) {
+				$postMessage['message'] .= $config['prepend'];
+			}
+			
+			if( is_array($config['lookUpTable']) ) {
+				$query = $config['lookUpTable'];
+				if( is_array($query['where']) ) {
+					foreach($query['where'] as $key => $value) {
+						$whereparts[] = $key . '="' . $value.'"';
+					}
+					$query['where'] = implode(' AND ', $whereparts);
+				}
+				
+				$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
+					$query['alias'] .' as message',
+					$query['table'],
+					$query['where'],
+					'',
+					'',
+					1
+				);
+				$row = $row[0];
+				$postMessage['message'] .= $row['message'];
+			}
+			
+			if( isset($config['append']) ) {
+				$postMessage['message'] .= $config['append'];
+			}
+			
+			if( is_array($config['linkToPage']) ) {
+				$linkToPage = $config['linkToPage'];
+				if( is_array($linkToPage['typolink']) ) {
+					// get URL made by realurl
+					$link = self :: getURL($linkToPage['typolink']);
+				}
+				$postMessage['link'] = $link;
+			}
+			
+		}
+		$s_postMessage = implode(' ', $postMessage);
+		// if length is longer than the maximum 140 chars, create an tinyurl
+		if(strlen($s_postMessage) > 140) {
+			$postMessage['link'] = self :: get_tiny_url($postMessage['link']);
+			$s_postMessage = implode(' ', $postMessage);
+		}
+		
+		return $s_postMessage;
+	}
+	
+	/**
+  * This function will generate RealURLs
+  * All thanks goes out to Sebastiaan de Jonge!
+  */
+	function getUrl($a_linkConfig){
+		$cObj = t3lib_div::makeInstance('tslib_cObj');
+		$o_realUrl = t3lib_div::makeInstance('tx_realurl');
+		$GLOBALS['TSFE']->config['config']['tx_realurl_enable'] = 1;
+		
+		$i_pageUid = intval($a_linkConfig['parameter']);
+		$s_additionalParams = $a_linkConfig['additionalParams'];
+		$a_page = $GLOBALS['TSFE']->sys_page->checkRecord('pages', $i_pageUid, 0);
+		$a_conf['LD'] = $GLOBALS['TSFE']->tmpl->linkData($a_page, '', 0, 'index.php', '', $s_additionalParams);
+		$o_realUrl->encodeSpURL($a_conf, $this);
+		$s_url = $a_conf['LD']['totalURL'];
+		
+		if (strstr($s_url, "http://") != $s_url) {
+			// append http..
+			$s_url = 'http://'.$GLOBALS['_SERVER']['HTTP_HOST'].'/'.$s_url;
+		}
+		
+		return $s_url;
+	}
+	
+	function get_tiny_url($url)  {  
+		$ch = curl_init();  
+		$timeout = 5;  
+		curl_setopt($ch,CURLOPT_URL,'http://tinyurl.com/api-create.php?url='.$url);  
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);  
+		curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,$timeout);  
+		$data = curl_exec($ch);  
+		curl_close($ch);  
+		return $data;  
 	}
 }
 ?>
